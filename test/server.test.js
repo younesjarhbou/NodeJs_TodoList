@@ -1,21 +1,32 @@
 const express = require('express');
+const { mongoConnectionString } = require('../config');
 const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
-const Todo = require('../models/todo');
 const request = require('supertest');
+const Todo = require('../models/todo');
 
 const app = express();
-const { mongoConnectionString } = require('../config');
 
+app.use(bodyParser.json());
+app.use('/todos', require('../routes/todos'));
+
+
+var globalTodoData = [];
+
+var isPostFinished = false;
+var isGetFinished = false;
+var isPutFinished = false;
+
+var globalId = "";
 describe('Todo API', () => {
+ 
   beforeAll(async () => {
     await mongoose.connect(mongoConnectionString, {
       useNewUrlParser: true,
       useUnifiedTopology: true,
     });
-
-    app.use(bodyParser.json());
-    app.use('/todos', require('../routes/todos'));
+    //delete all data in the database mongodb
+    await Todo.deleteMany({});
 
     app.server = await app.listen();
   });
@@ -25,93 +36,79 @@ describe('Todo API', () => {
     await app.server.close();
   });
 
- /* describe('GET /todos', () => {
-    it('should return all todos', async () => {
-      const response = await request(app).get('/todos');
-      expect(response.status).toBe(200);
-      expect(response.body).toEqual([
-        {
-            "_id": "653476dddbe0f95b1d7c5336",
-            "text": "Test Todo",
-            "completed": false,
-            "created_at": "2023-10-22T01:11:57.703Z",
-            "__v": 0
-        },
-        {
-            "_id": "653476dddbe0f95b1d7c5338",
-            "text": "Test Todo",
-            "completed": false,
-            "created_at": "2023-10-22T01:11:57.782Z",
-            "__v": 0
-        },
-        {
-            "_id": "653477e6a002e1f60e6217ba",
-            "text": "Test Todo",
-            "completed": false,
-            "created_at": "2023-10-22T01:16:22.664Z",
-            "__v": 0
-        },
-        {
-            "_id": "653477e6a002e1f60e6217bc",
-            "text": "Test Todo",
-            "completed": false,
-            "created_at": "2023-10-22T01:16:22.745Z",
-            "__v": 0
-        }
-    ]);
-    });
-  
-    // You can write additional tests for this route, such as testing with pre-populated todos in the database
-  });*/
-
   describe('POST /todos', () => {
-    it('should add a new todo', async () => {
+    it.concurrent('should add a new todo', async () => {
       const todoData = { "text": "New Todo", "completed": false };
-  
       app.use('/todos', require('../routes/addTodo'));
+
       const response = await request(app)
         .post('/todos')
         .send(todoData);
-  
+
+      globalTodoData.push(response.body);
+      globalId = globalTodoData[0]["_id"];
+
+    
       expect(response.status).toBe(201);
       expect(response.body.text).toBe(todoData.text);
       expect(response.body.completed).toBe(todoData.completed);
+      isPostFinished = true;
     });
   
     // You can write additional tests for this route
   });
 
+  describe('GET /todos', () => {
+    it.concurrent('should return all todos', async () => {
+      //wait until post finished
+      while(!isPostFinished){
+        await new Promise(resolve => setTimeout(resolve, 100));
+      }
+
+      app.use('/todos', require('../routes/todos'));
+      const response = await request(app).get('/todos');
+      console.log("Response GET Body:", response.body);
+
+      expect(response.status).toBe(200);
+      expect(response.body).toEqual(globalTodoData);
+    });
+    isGetFinished = true;
+  
+    // You can write additional tests for this route, such as testing with pre-populated todos in the database
+  });
+
   describe('PUT /todos/:id', () => {
-    it('should update the state of a todo', async () => {
-      const todo = new Todo({ text: 'Test Todo', completed: false });
-      await todo.save();
-
+    it.concurrent('should update the state of a todo', async () => {
+      //wait until post finished
+      while(!isGetFinished){
+        await new Promise(resolve => setTimeout(resolve, 100));
+      }
       const updatedTodoData = { completed: true };
-
       app.use('/todos', require('../routes/updateTodo'));
-
+      console.log("globalId:", globalId);
       const response = await request(app)
-        .put(`/todos/${todo._id}`)
+        .put(`/todos/${globalId}`)
         .send(updatedTodoData);
 
       expect(response.status).toBe(200);
       expect(response.body.completed).toBe(updatedTodoData.completed);
     });
-
+    isPutFinished = true;
     // You can write additional tests for this route, such as testing with invalid todo ID or non-existent todos
   });
 
   describe('DELETE /todos/:id', () => {
-    it('should delete a todo', async () => {
-      const todo = new Todo({ text: 'Test Todo', completed: false });
-      await todo.save();
-
+    it.concurrent('should delete a todo', async () => {
+      //wait until post finished
+      while(!isPutFinished){
+        await new Promise(resolve => setTimeout(resolve, 100));
+      }
       app.use('/todos', require('../routes/deleteTodo'));
-      const response = await request(app).delete(`/todos/${todo._id}`);
+      const response = await request(app).delete(`/todos/${globalId}`);
 
       expect(response.status).toBe(200);
-      expect(response.body.text).toBe(todo.text);
-      expect(response.body.completed).toBe(todo.completed);
+      expect(response.body.text).toBe(globalTodoData[0].text);
+      expect(response.body.completed).toBe(globalTodoData[0].completed);
     });
 
     // You can write additional tests for this route, such as testing with invalid todo ID or non-existent todos
