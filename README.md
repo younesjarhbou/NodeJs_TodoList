@@ -98,19 +98,3 @@ To run the tests, execute the following command:
      npx jest
 ``` 
  
-
-
-
-
-
-
-## Usage/Examples
-
-```javascript
-import Component from 'my-project'
-
-function App() {
-  return <Component />
-}
-```
-
