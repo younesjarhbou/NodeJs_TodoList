@@ -24,7 +24,7 @@ app.use('/todos', require('./routes/todos'));
 app.use('/todos', require('./routes/updateTodo'));
 app.use('/todos', require('./routes/addTodo'));
 app.use('/todos', require('./routes/deleteTodo'));
-app.use('/login', require('./routes/signIn'));
+app.use('/todos', require('./routes/signIn'));
 
 
 
