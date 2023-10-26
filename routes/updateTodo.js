@@ -1,10 +1,11 @@
 const express = require('express');
 const Todo = require('../models/todo');
+const verifyToken = require('../middleware/verifyToken');
 
 const router = express.Router();
 
 // Define a route for updating the state of a todo
-router.put('/:id', async (req, res) => {
+router.put('/:id',verifyToken, async (req, res) => {
   try {
     const { id } = req.params;
     const { completed } = req.body;

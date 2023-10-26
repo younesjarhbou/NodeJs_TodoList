@@ -1,10 +1,11 @@
 const express = require('express');
 const Todo = require('../models/todo');
+const verifyToken = require('../middleware/verifyToken');
 
 const router = express.Router();
 
 // Define a route for fetching all todos
-router.get('/', async (req, res) => {
+router.get('/',verifyToken, async (req, res) => {
   try {
     const todos = await Todo.find();
     res.json(todos);

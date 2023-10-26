@@ -2,9 +2,10 @@ const express = require('express');
 const Todo = require('../models/todo');
 
 const router = express.Router();
+const verifyToken = require('../middleware/verifyToken');
 
 // Define a route for deleting a todo
-router.delete('/:id', async (req, res) => {
+router.delete('/:id',verifyToken, async (req, res) => {
   try {
     const { id } = req.params;
 

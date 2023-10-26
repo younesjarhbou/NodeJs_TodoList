@@ -6,7 +6,9 @@ const { mongoConnectionString } = require('./config');
 
 const app = express();
 const port = process.env.PORT || 3000;
+//const verifyToken = require('./middleware/verifyToken');
 
+ 
 // Connect to your MongoDB database
 //BBNW1jWUCrncXDcz
 //mongodb+srv://younesdev97:BBNW1jWUCrncXDcz@cluster0.50qm34f.mongodb.net/
@@ -22,6 +24,7 @@ app.use('/todos', require('./routes/todos'));
 app.use('/todos', require('./routes/updateTodo'));
 app.use('/todos', require('./routes/addTodo'));
 app.use('/todos', require('./routes/deleteTodo'));
+app.use('/login', require('./routes/signIn'));
 
 
 

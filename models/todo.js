@@ -11,8 +11,8 @@ const todoSchema = new mongoose.Schema({
     default: false,
   },
   created_at: {
-    type: Date,
-    default: Date.now,
+    type: String, // Change the type to String
+    default: new Date().toISOString(), // Set a default value as a string representation of the current date and time
   },
 });
 

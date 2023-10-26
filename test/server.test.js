@@ -25,7 +25,10 @@ describe('Todo API', () => {
   });
 
   afterAll(async () => {
+        //delete all data inside mongodb
+        await Todo.deleteMany({});
     await mongoose.connection.close();
+
     await app.server.close();
   });
 
@@ -50,24 +53,32 @@ describe('Todo API', () => {
   });
 
   describe('GET /todos', () => {
-    it('should return all todos', async () => {
-        //delete all data inside mongodb
-        await Todo.deleteMany({});
-        const todo = new Todo({ text: 'Test Todo', completed: false });
-        await todo.save();
-      const response = await request(app).get('/todos');
-      expect(response.status).toBe(200);
-      expect(response.body).toEqual(todo);
+    let todo;
+  
+    beforeEach(async () => {
+      await Todo.deleteMany({});
+      todo = new Todo({ text: 'Test Todo', completed: false });
+      await todo.save();
+      app.use('/todos', require('../routes/todos'));
     });
   
-    // You can write additional tests for this route, such as testing with pre-populated todos in the database
+    it('should return all todos', async () => {
+      const response = await request(app).get('/todos');
+      const itemsArray = Object.values(response.body);
+      const firstItem = itemsArray[0];
+      const todoObject = todo.toObject(); // Convert the todo to a plain JavaScript object
+  
+      expect(response.status).toBe(200);
+      expect(firstItem).toEqual(todoObject);
+    });
+  
+    // Additional tests can be added here
   });
 
 describe('PUT /todos/:id', () => {
     it.concurrent('should update the state of a todo', async () => {
       const todo = new Todo({ text: 'Test Todo', completed: false });
       await todo.save();
-
       const updatedTodoData = { completed: true };
 
       app.use('/todos', require('../routes/updateTodo'));
