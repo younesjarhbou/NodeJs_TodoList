@@ -9,8 +9,7 @@ const verifyToken = (req, res, next) => {
     }
     
     try {
-      console.log("token " + token.split(' ')[1]);
-      console.log("process.env.JWT_SECRET " + process.env.ACCESS_TOKEN_SECRET);
+
       // Verify and decode the token using your secret key
       const decoded = jwt.verify(token.split(' ')[1], process.env.ACCESS_TOKEN_SECRET);
       
